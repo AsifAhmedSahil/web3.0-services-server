@@ -8,18 +8,78 @@ require('dotenv').config()
 app.use(cors())
 app.use(express.json())
 
-console.log(process.env.DB_USER);
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.quaequt.mongodb.net/?retryWrites=true&w=majority`;
 console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-client.connect(err => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  client.close();
-});
+
+async function run(){
+    try{
+        const serviceCollection = client.db("web3services").collection("services");
+        const reviewCollection = client.db("web3services").collection("review");
+        // const Addservice = client.db("web3services").collection("addservices")
+        app.get('/services', async(req,res)=>{
+            const query = {}
+            const cursor = serviceCollection.find(query);
+            const services = await cursor.limit(3).toArray()
+            res.send(services)
+        })
+        app.get('/allservices', async(req,res)=>{
+            const query = {}
+            const cursor = serviceCollection.find(query);
+            const services = await cursor.toArray()
+            res.send(services)
+        })
+
+        app.get("/services/:id",async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)}
+            const service = await serviceCollection.findOne(query);
+            res.send(service);
+        })
+
+        app.post("/addservices",async(req,res) =>{
+            const result = await serviceCollection.insertOne(req.body)
+            if(result.insertedId){
+                res.send({
+                    success:true,
+                    message: "succesfully added"
+                })
+            }
+            else{
+                res.send({
+                    success:false,
+                    error:"cannot fetch"
+                })
+            }
+        })
+
+        app.post("/reviews",async(req,res) =>{
+            const result = await reviewCollection.insertOne(req.body)
+            if(result.insertedId){
+                res.send({
+                    success:true,
+                    message: "succesfully added"
+                })
+            }
+            else{
+                res.send({
+                    success:false,
+                    error:"cannot fetch"
+                })
+            }
+        })
+    }
+    finally{
+
+    }
+
+}
+
+run().catch(err => console.error(err))
 
 
 app.get('/',(req,res) =>{
