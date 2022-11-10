@@ -115,7 +115,7 @@ async function run(){
             const result = await reviewCollection.deleteOne(query);
             res.send(result)
         })
-        app.patch
+        app.patchfdsfdsfdsf
 
         
     }
