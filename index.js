@@ -1,5 +1,6 @@
 const express = require("express");
 const cors= require("cors");
+const jwt = require('jsonwebtoken')
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config()
@@ -21,10 +22,17 @@ async function run(){
         const serviceCollection = client.db("web3services").collection("services");
         const reviewCollection = client.db("web3services").collection("review");
         // const Addservice = client.db("web3services").collection("addservices")
+        app.post("/jwt",(req,res) =>{
+            const user = req.body;
+            const token = jwt.sign(user,process.env.ACCESS_TOKEN)
+            res.send(token)
+            console.log(user);
+        })
         app.get('/services', async(req,res)=>{
             const query = {}
-            const cursor = serviceCollection.find(query);
+            const cursor = serviceCollection.find(query).sort({ title : -1});
             const services = await cursor.limit(3).toArray()
+            console.log(cursor)
             res.send(services)
         })
         app.get('/allservices', async(req,res)=>{
@@ -69,6 +77,8 @@ async function run(){
             const review = await cursor.toArray()
             res.send(review)
         })
+
+        
         // app.get('/myreviews', async(req,res)=>{
         //     let query = {}
         //     console.log(req.query)
@@ -99,6 +109,14 @@ async function run(){
                 })
             }
         })
+        app.delete("/reviews/:id",async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result)
+        })
+
+        
     }
     finally{
 
